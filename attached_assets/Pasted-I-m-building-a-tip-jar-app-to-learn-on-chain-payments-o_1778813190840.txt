@@ -1,0 +1,42 @@
+I'm building a tip jar app to learn on-chain payments on Monad
+testnet. The user connects a wallet and sees three tip buttons:
+0.01, 0.05, and 0.1 MON. Clicking a button sends a MON transfer
+from their wallet to my recipient address. After the transfer
+confirms on-chain and my server verifies it, they land on a
+/success page.
+
+Rules:
+- Target Monad testnet. Chain ID: 10143. RPC:
+  https://testnet-rpc.monad.xyz. Block explorer:
+  https://testnet.monadscan.com. Native token: MON.
+- Use Next.js with wagmi + viem + RainbowKit on the client for
+  wallet connection and sending the transaction. Do NOT install
+  ethers.
+- Read the recipient address from process.env.RECIPIENT_ADDRESS
+  on the server. Expose it to the client via a server endpoint,
+  not by hard-coding it in a component.
+- Tip amounts MUST be defined in server code, not accepted from
+  the client. The client sends { button: 1 | 2 | 3 }; the server
+  maps that to the exact wei amount. Otherwise a malicious client
+  could claim "I paid 0.1 MON" for a 0.01 MON transaction.
+- After the wallet confirms, the client POSTs
+  { txHash, button } to /api/verify-payment. That route:
+    * Uses viem's createPublicClient({ chain: monadTestnet,
+      transport: http(MONAD_RPC) }) to fetch the transaction and
+      its receipt from Monad testnet.
+    * Asserts receipt.status === 'success'.
+    * Asserts tx.to (lowercased) === RECIPIENT_ADDRESS (lowercased).
+    * Asserts tx.value >= the expected wei amount for the button.
+    * Asserts tx.chainId matches 10143.
+    * Tracks seen tx hashes (in-memory Set for this lesson is
+      fine) and rejects duplicates — same hash cannot be reused.
+  Return 200 only when every check passes. 4xx otherwise with a
+  clear error message.
+- Success URL: /success (a simple page that says "Thanks!" and
+  shows the tx hash + a link to the explorer).
+- If RECIPIENT_ADDRESS is missing, show a clear error in place
+  of the buttons. Do not silently fail.
+- Keep the UI minimal. Three buttons on a plain page, standard
+  system fonts, plain colors, no gradients.
+
+Run it locally so I can test it in my browser.
