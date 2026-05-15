@@ -1,3 +1,3 @@
 # Tip Jar
 
-Monad Testnet Tip Jar — on-chain payments with Next.js, wagmi, viem, and RainbowKit.
+Monad Testnet Tip Jar — testing on-chain payments with Next.js, wagmi, viem, and RainbowKit.
